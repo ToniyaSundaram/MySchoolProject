@@ -1,10 +1,9 @@
 package com.example.api
 
 import com.example.flow.EditFlow.Editor
-import com.example.flow.SchoolFlow.Initiator
+import com.example.flow.CreateFlow.Initiator
 import com.example.state.SchoolState
 import net.corda.core.identity.CordaX500Name
-import net.corda.core.identity.Party
 import net.corda.core.messaging.CordaRPCOps
 import net.corda.core.messaging.startTrackedFlow
 import net.corda.core.messaging.vaultQueryBy
@@ -80,11 +79,11 @@ class ExampleApi(private val rpcOps: CordaRPCOps) {
         if (deo == null) {
             return Response.status(BAD_REQUEST).entity("Query parameter 'partyName' missing or has wrong format.\n").build()
         }
-        val deo = rpcOps.wellKnownPartyFromX500Name(deo) ?:
+        val deoNode = rpcOps.wellKnownPartyFromX500Name(deo) ?:
                 return Response.status(BAD_REQUEST).entity("Party named $deo cannot be found.\n").build()
 
         return try {
-            val signedTx = rpcOps.startTrackedFlow(::Initiator, name,age,studentid, deo).returnValue.getOrThrow()
+            val signedTx = rpcOps.startTrackedFlow(::Initiator, name,age,studentid, deoNode).returnValue.getOrThrow()
             Response.status(CREATED).entity("Transaction id ${signedTx.id} committed to ledger.\n").build()
 
         } catch (ex: Throwable) {
@@ -99,14 +98,14 @@ class ExampleApi(private val rpcOps: CordaRPCOps) {
         if(age <=0) {
             return Response.status(BAD_REQUEST).entity("Query parameter 'studentid' must be non-negative.\n").build()
         }
-        val deo = rpcOps.wellKnownPartyFromX500Name(CordaX500Name("deo", "London", "GB")) ?:
+        val deoNode = rpcOps.wellKnownPartyFromX500Name(CordaX500Name("deo", "London", "GB")) ?:
         return Response.status(BAD_REQUEST).entity("deo node cannot be found.\n").build()
 
-        val School = rpcOps.wellKnownPartyFromX500Name(School!!) ?:
+        val SchoolNode = rpcOps.wellKnownPartyFromX500Name(School!!) ?:
         return Response.status(BAD_REQUEST).entity("Party named $School cannot be found.\n").build()
 
         return  try {
-            val signedTx = rpcOps.startTrackedFlow(::Editor, studentId, age,deo,School).returnValue.getOrThrow();
+            val signedTx = rpcOps.startTrackedFlow(::Editor, studentId, age,deoNode,SchoolNode).returnValue.getOrThrow();
             Response.status(CREATED).entity("Transaction id ${signedTx.id} committed to ledger.\n").build()
         } catch (ex: Throwable) {
             logger.error(ex.message, ex)

@@ -3,8 +3,8 @@ package com.example.flow
 import co.paralleluniverse.fibers.Suspendable
 import com.example.contract.SchoolContract
 import com.example.contract.SchoolContract.Companion.School_CONTRACT_ID
-import com.example.flow.SchoolFlow.Acceptor
-import com.example.flow.SchoolFlow.Initiator
+import com.example.flow.CreateFlow.Acceptor
+import com.example.flow.CreateFlow.Initiator
 import com.example.state.SchoolState
 import net.corda.core.contracts.Command
 import net.corda.core.contracts.requireThat
@@ -26,7 +26,7 @@ import net.corda.core.utilities.ProgressTracker.Step
  *
  * All methods called within the [FlowLogic] sub-class need to be annotated with the @Suspendable annotation.
  */
-object SchoolFlow {
+object CreateFlow {
     @InitiatingFlow
     @StartableByRPC
     class Initiator(val name: String,
@@ -107,7 +107,7 @@ object SchoolFlow {
             val signTransactionFlow = object : SignTransactionFlow(otherPartyFlow) {
                 override fun checkTransaction(stx: SignedTransaction) = requireThat {
                     val output = stx.tx.outputs.single().data
-                    "This must be an IOU transaction." using (output is SchoolState)
+                    "This must be an School transaction." using (output is SchoolState)
                     val student= output as SchoolState
                     "I won't accept id greater than 0." using (student.id >= 100)
                 }

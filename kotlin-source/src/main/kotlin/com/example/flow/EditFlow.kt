@@ -69,29 +69,31 @@ object EditFlow {
             val notary = serviceHub.networkMapCache.notaryIdentities[0]
 
             //Query the vault state by studentId
-            val studentIdCriteria = builder { SchoolSchemaV1.PersistentSchool::id.equal(studentId) }
-            val customCriteria1 = VaultCustomQueryCriteria(studentIdCriteria)
+            val expression = builder { SchoolSchemaV1.PersistentSchool::id.equal(studentId) }
+            val studentIdCriteria = QueryCriteria.VaultCustomQueryCriteria(expression)
             val generalCriteria = QueryCriteria.VaultQueryCriteria(Vault.StateStatus.UNCONSUMED)
 
-            val vaultState= serviceHub.vaultService.queryBy<SchoolState>(generalCriteria.and(customCriteria1)).states.singleOrNull()
+            val vaultState= serviceHub.vaultService.queryBy<SchoolState>(generalCriteria.and(studentIdCriteria)).states.singleOrNull()
 
-            println("VaultSat=========>"+vaultState)
-            val linearId = vaultState!!.state.data.linearId
-            val name =  vaultState!!.state.data.name
+            //println("VaultState=========>"+vaultState)
 
+            val studentid = vaultState!!.state.data.id
+            //println("studentid==========>"+studentid);
+            val name =  vaultState.state.data.name
+            //println("name =========>"+name);
 
             // Stage 1.
             progressTracker.currentStep = GENERATING_TRANSACTION
             // Generate an unsigned transaction.
-            val schoolState = SchoolState(name,age,studentId,school,deo,linearId)
+            val schoolState = SchoolState(name,age,studentId,school,deo)
 
-            val txCommand = Command(SchoolContract.Commands.Create(), schoolState.participants.map { it.owningKey })
+            val txCommand = Command(SchoolContract.Commands.Edit(), schoolState.participants.map { it.owningKey })
             val txBuilder = TransactionBuilder(notary)
                     .addOutputState(schoolState, SchoolContract.School_CONTRACT_ID)
                     .addCommand(txCommand)
 
             //Add vault state
-            if (vaultState != null) {
+            if (true) {
                 txBuilder.addInputState(vaultState)
             }
 
@@ -126,7 +128,7 @@ object EditFlow {
             val signTransactionFlow = object : SignTransactionFlow(otherPartyFlow) {
                 override fun checkTransaction(stx: SignedTransaction) = requireThat {
                     val output = stx.tx.outputs.single().data
-                    "This must be an IOU transaction." using (output is SchoolState)
+                    "This must be an School transaction." using (output is SchoolState)
                     val student= output as SchoolState
                     "I won't accept id greater than 0" using (student.id >= 0)
                 }
