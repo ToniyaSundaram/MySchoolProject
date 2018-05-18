@@ -47,7 +47,7 @@ open class SchoolContract : Contract {
         } else {
             requireThat {
                 // Generic constraints around the IOU transaction.
-                "Inputs should be consumed when Authorizing a Service Credit." using (tx.inputs.isNotEmpty())
+                "Inputs should be consumed when editing the information" using (tx.inputs.isNotEmpty())
 
                 val out = tx.outputsOfType<SchoolState>().single()
 
